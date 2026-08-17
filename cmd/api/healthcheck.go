@@ -3,14 +3,19 @@ package main
 
 import (
 	"net/http"
-	"fmt"
 )
 
 func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	js := `{"status": "available", "environment": %q, "version": %q}`
-	js = fmt.Sprintf(js, app.config.Env, version)
-	// Specify that we will be serve our responses using JSON
-	w.Header().Set("Content-Type", "application/json")
-	// write the JSON as the HTTP response body
-	w.Write([]byte(js))
+	// Create a map to hold our healthcheck data
+	data := map[string]string {
+		"status": "available",
+		"environment": app.config.Env,
+		"version": version,
+	}
+	err := app.writeJSON(w, http.StatusOK, data, nil)
+	if err != nil {
+		app.logger.Println(err)
+		http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+		return
+	}
 }
