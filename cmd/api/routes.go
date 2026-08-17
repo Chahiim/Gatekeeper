@@ -9,8 +9,8 @@ import (
 func (app *application) routes() *httprouter.Router {
 	// Create a new httprouter router instance
 	router := httprouter.New()
-	router.HandleFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
-	router.HandleFunc(http.MethodPost, "/v1/consumers", app.createConsumerHandler)
-	router.HandleFunc(http.MethodGet, "/v1/consumers/:id", app.getConsumerHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/consumers", app.createConsumerHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/consumers/:id", app.showConsumerHandler)
 	return router
 }
