@@ -7,8 +7,10 @@ import (
 )
 
 func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Status: 200 OK")
-	fmt.Fprintf(w, "Environment: %s \n", app.config.Env)
-	fmt.Fprintf(w, "Version: %s \n", version)
-	fmt.Fprintf(w, "Current Time: %s \n", r.Context().Value(http.ServerContextKey).(*http.Server).IdleTimeout)
+	js := `{"status": "available", "environment": %q, "version": %q}`
+	js = fmt.Sprintf(js, app.config.Env, version)
+	// Specify that we will be serve our responses using JSON
+	w.Header().Set("Content-Type", "application/json")
+	// write the JSON as the HTTP response body
+	w.Write([]byte(js))
 }
