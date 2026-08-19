@@ -1,57 +1,94 @@
-//Filename: cmd/api/main.go
 package main
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"flag"
-	"log"
-	"net/http"
+	"log/slog"
 	"os"
+	"sync"
 	"time"
+
+	"github.com/Chahiim/Gatekeeper/internal/data"
+	_ "github.com/lib/pq"
 )
 
-// The application version number
 const version = "1.0.0"
-// The configuration settings
+
 type config struct {
-	Port int
-	Env  string // development, staging, production
+	port        int
+	env         string
+	reportDelay time.Duration
+	db          struct {
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  time.Duration
+	}
 }
-// Dependency Injection
+
 type application struct {
 	config config
-	logger *log.Logger
+	logger *slog.Logger
+	models data.Models
+	wg     sync.WaitGroup
 }
 
 func main() {
 	var cfg config
-	// Flags needed to populate the config
-	flag.IntVar(&cfg.Port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
-	//Create a logger
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	//Create an instance of the application struct
+
+	flag.IntVar(&cfg.port, "port", 4000, "API server port")
+	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.DurationVar(&cfg.reportDelay, "report-delay", 0, "Artificial report-generation delay")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostgreSQL DSN")
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
+	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
+
+	flag.Parse()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	logger.Info("database connection pool established")
+
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
-	// Create our new servemux
-	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
-	// Create a new HTTP server
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-	// Start the server
-	logger.Printf("Starting %s server on %s", cfg.Env, srv.Addr)
-	err := srv.ListenAndServe()
+
+	err = app.serve()
 	if err != nil {
-		logger.Fatalf("Error starting server: %v", err)
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+}
+
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
 	}
 
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	db.SetConnMaxIdleTime(cfg.db.maxIdleTime)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }
