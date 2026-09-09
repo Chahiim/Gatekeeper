@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageLab</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>ImageLab</h1>
+        <p class="subtitle">Asynchronous Image Processing</p>
+    </header>
+
+    <main>
+        <!-- Upload Section -->
+        <section class="card upload-section">
+            <h2>Upload Image</h2>
+            <div id="upload-area" class="upload-area">
+                <input type="file" id="file-input" accept="image/jpeg,image/png" hidden>
+                <label for="file-input" class="upload-label">
+                    <span class="upload-icon">+</span>
+                    <span>Select JPEG or PNG (max 10 MB)</span>
+                </label>
+            </div>
+
+            <!-- Preview (hidden initially) -->
+            <div id="preview-section" class="preview-section" hidden>
+                <div class="preview-header">
+                    <h3 id="preview-filename"></h3>
+                    <button id="remove-file" class="btn-link" type="button">Change file</button>
+                </div>
+                <img id="preview-image" class="preview-image" alt="Preview">
+                <div class="preview-meta">
+                    <span id="preview-size"></span>
+                    <span id="preview-type"></span>
+                </div>
+                <button id="process-btn" class="btn btn-primary" disabled>Process image</button>
+            </div>
+
+            <!-- Error message -->
+            <div id="upload-error" class="error-message" hidden></div>
+        </section>
+
+        <!-- Job Status Section -->
+        <section id="job-card" class="card job-card" hidden>
+            <h2>Job Status</h2>
+            <div class="job-header">
+                <span id="job-id"></span>
+                <span id="status-badge" class="badge"></span>
+            </div>
+            <div id="job-timeline" class="timeline"></div>
+            <div id="polling-info" class="polling-info" hidden>
+                <span class="spinner"></span>
+                Checking status automatically - Every 1 second
+            </div>
+            <div id="try-again-section" hidden>
+                <p class="error-text">Unable to check status. The job may still be running.</p>
+                <button id="try-again-btn" class="btn btn-secondary">Try again</button>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="card results-section" hidden>
+            <h2>Results</h2>
+            <div id="results-empty" class="empty-state">
+                No images generated yet.
+            </div>
+            <div id="results-active" class="processing-state" hidden>
+                Images are being generated. Results will appear when processing completes.
+            </div>
+            <div id="results-grid" class="results-grid" hidden></div>
+            <div id="results-error" class="error-state" hidden>
+                <p>Processing failed.</p>
+                <p id="results-error-message"></p>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

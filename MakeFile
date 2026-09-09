@@ -1,33 +1,21 @@
-.PHONY: build run db-up db-down db-migrate db-migrate-down db-seed test clean
+.PHONY: build run db-up db-down db-migrate db-migrate-down test clean
 
-# Build the API binary
+DB_DSN="postgres://gatekeeper:cookies@localhost:5432/gatekeeper?sslmode=disable"
+
 build:
 	go build -o ./bin/api ./cmd/api
 
-# Run the API server
 run:
-	go run ./cmd/api -db-dsn="postgres://gatekeeper:gatekeeper@localhost:5432/gatekeeper?sslmode=disable"
+	go run ./cmd/api -db-dsn=$(DB_DSN)
 
-# Start the database
-db-up:
-	docker compose up -d
-
-# Stop the database
-db-down:
-	docker compose down
-
-# Run database migrations (requires migrate CLI)
 db-migrate:
-	migrate -path ./migrations -database "postgres://gatekeeper:gatekeeper@localhost:5432/gatekeeper?sslmode=disable" up
+	migrate -path ./migrations -database $(DB_DSN) up
 
-# Rollback last migration
 db-migrate-down:
-	migrate -path ./migrations -database "postgres://gatekeeper:gatekeeper@localhost:5432/gatekeeper?sslmode=disable" down 1
+	migrate -path ./migrations -database $(DB_DSN) down 1
 
-# Run tests
 test:
 	go test -v ./...
 
-# Clean build artifacts
 clean:
-	rm -rf ./bin
+	rm -rf ./bin ./uploads

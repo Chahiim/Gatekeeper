@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Chahiim/Gatekeeper/internal/data"
 	_ "github.com/lib/pq"
 )
 
@@ -30,7 +29,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
-	models data.Models
+	models Models
 	wg     sync.WaitGroup
 }
 
@@ -61,7 +60,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
-		models: data.NewModels(db),
+		models: newModels(db),
 	}
 
 	err = app.serve()
