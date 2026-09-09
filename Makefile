@@ -1,6 +1,6 @@
 .PHONY: build run db-up db-down db-migrate db-migrate-down test clean
 
-DB_DSN="postgres://gatekeeper:cookies@localhost:5432/gatekeeper?sslmode=disable"
+DB_DSN="postgres://gatekeeper:gatekeeper@localhost:5432/gatekeeper?sslmode=disable"
 
 build:
 	go build -o ./bin/api ./cmd/api
